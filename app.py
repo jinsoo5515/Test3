@@ -33,12 +33,16 @@ class TranslationError(Exception):
 def get_setting(name: str, default: str | None = None) -> str | None:
     """환경변수(.env) 우선, 없으면 st.secrets(배포 환경)에서 읽는다."""
     value = os.getenv(name)
-    if value:
-        return value
-    try:
-        return st.secrets.get(name, default)
-    except Exception:
+    if not value:
+        try:
+            value = st.secrets.get(name)
+        except Exception:
+            value = None
+    if not value:
         return default
+    # 복사 과정에서 붙은 공백/줄바꿈/따옴표 제거
+    value = str(value).strip().strip("\"'“”‘’").strip()
+    return value or default
 
 
 def translate(text: str, target_language: str) -> str:
